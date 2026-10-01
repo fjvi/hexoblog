@@ -1,0 +1,56 @@
+name: Sync Issues to Blog
+
+on:
+  issues:
+    types: [opened, edited, labeled] # 创建、编辑、打标签时触发
+  workflow_dispatch: # 支持手动触发
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main # 或 master，建议检出你存放源码的分支
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Create Post from Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const issue = context.payload.issue;
+            if (!issue || issue.state === 'closed') return;
+
+            // 使用你的 scaffolds 模板结构
+            const frontMatter = `---\ntitle: ${issue.title}\ndate: ${issue.created_at}\ntags: [issue]\n---\n`;
+            const content = frontMatter + '\n\n' + issue.body;
+            
+            // 文件名处理：建议使用 issue 编号保证唯一性
+            const fileName = `source/_posts/issue-${issue.number}.md`;
+            fs.writeFileSync(fileName, content);
+            console.log(`Created ${fileName}`);
+
+      - name: Build with Hexo
+        run: |
+          npx hexo generate
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public # Hexo 默认输出目录
+          publish_branch: gh-pages
+          force_orphan: true # 保持分支干净，只保留静态文件
