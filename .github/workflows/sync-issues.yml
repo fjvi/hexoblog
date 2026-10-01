@@ -6,37 +6,29 @@
       const issue = context.payload.issue;
       if (!issue || issue.state === 'closed') return;
 
-      // 1. 读取你的模板文件
-      let template = '';
-      try {
-        template = fs.readFileSync('scaffolds/post.md', 'utf8');
-      } catch (e) {
-        console.log('未找到 scaffolds/post.md，使用默认模板');
-        template = '---\ntitle: {{ title }}\ndate: {{ date }}\ntags:\n---\n';
+      // 1. 读模板
+      const templatePath = 'scaffolds/post.md';
+      if (!fs.existsSync(templatePath)) {
+        throw new Error('找不到模板文件: ' + templatePath);
       }
+      const template = fs.readFileSync(templatePath, 'utf8');
 
-      // 2. 替换模板变量（Hexo 脚手架用 {{ title }} 这种占位符）
+      // 2. 准备变量
       const now = new Date(issue.created_at);
-      const dateStr = now.toISOString().replace('T', ' ').substring(0, 19);
+      const pad = n => String(n).padStart(2, '0');
+      const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
       
+      // 3. 替换模板里的变量
       let frontMatter = template
         .replace(/\{\{\s*title\s*\}\}/g, issue.title)
-        .replace(/\{\{\s*date\s*\}\}/g, dateStr)
-        .replace(/\{\{\s*layout\s*\}\}/g, 'post');
+        .replace(/\{\{\s*date\s*\}\}/g, dateStr);
 
-      // 3. 处理标签：把 Issue 的 labels 转成 Hexo tags
-      const tags = issue.labels.map(l => `  - ${l.name}`).join('\n');
-      if (tags) {
-        // 如果模板里没有 tags 字段，追加进去
-        if (!frontMatter.includes('tags:')) {
-          frontMatter = frontMatter.replace(/---\s*$/, `tags:\n${tags}\n---`);
-        }
-      }
+      // 4. 组装文件（模板已有 --- 头尾，直接拼正文）
+      const content = frontMatter.trim() + '\n\n' + (issue.body || '');
 
-      // 4. 拼接正文，确保 Markdown 格式
-      const content = frontMatter + '\n\n' + (issue.body || '');
-
-      // 5. 文件名：用 issue 编号，避免标题里的特殊字符
+      // 5. 写文件
       const fileName = `source/_posts/issue-${issue.number}.md`;
       fs.writeFileSync(fileName, content, 'utf8');
-      console.log(`✅ Created ${fileName}`);
+      console.log('✅ 写入文件:', fileName);
+      console.log('===== 文件内容预览 =====');
+      console.log(content.substring(0, 500));
