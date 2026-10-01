@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "templateVersion": "1.0.0",
+  "engine": {
+    "id": "hexo",
+    "version": "8.1.1"
+  },
+  "theme": {
+    "id": "butterfly",
+    "version": "5.6.1",
+    "adapterVersion": "1.0.0"
+  },
+  "content": {
+    "posts": "source/_posts",
+    "drafts": "source/_drafts",
+    "images": "source/images"
+  },
+  "deployment": {
+    "provider": "github-pages",
+    "workflow": "pages.yml"
+  }
+}
+
