@@ -3,10 +3,10 @@ subtitle: Welcome to my blog
 description: A personal blog created with HexoLaunch.
 keywords:
 author: Blog Author
-language: zh
+language: en
 timezone: Asia/Shanghai
 
-url: https://fjvo.github.io/hexoblog
+url: https://fjvi.github.io/hexoblog
 root: /hexoblog/
 permalink: posts/:title/
 pretty_urls:
